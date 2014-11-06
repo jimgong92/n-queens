@@ -28,7 +28,16 @@
       this.get(rowIndex)[colIndex] = + !this.get(rowIndex)[colIndex];
       this.trigger('change');
     },
-
+    countActivePieces: function() {
+      var arr = this.rows();
+      var count = 0;
+      for (var r = 0; r < arr.length; r++) {
+        for (var c = 0; c < arr.length; c++) {
+          if (arr[r][c] > 0) count++;
+        }
+      }
+      return count;
+    },
     _getFirstRowColumnIndexForMajorDiagonalOn: function(rowIndex, colIndex) {
       return colIndex - rowIndex;
     },
@@ -40,7 +49,11 @@
     hasAnyRooksConflicts: function() {
       return this.hasAnyRowConflicts() || this.hasAnyColConflicts();
     },
-
+    hasAnyRookConflictsOn: function(rowIndex, colIndex) {
+      return (
+        this.hasRowConflictAt(rowIndex) || this.hasColConflictAt(colIndex)
+      );
+    },
     hasAnyQueenConflictsOn: function(rowIndex, colIndex) {
       return (
         this.hasRowConflictAt(rowIndex) ||
@@ -53,7 +66,9 @@
     hasAnyQueensConflicts: function() {
       return this.hasAnyRooksConflicts() || this.hasAnyMajorDiagonalConflicts() || this.hasAnyMinorDiagonalConflicts();
     },
-
+    hasUpperConflictAt: function(rowIndex, colIndex) {
+      return this.hasUpperDiagonalConflictAt(rowIndex, colIndex) || this.hasUpperColumnConflictAt(rowIndex, colIndex);
+    },
     _isInBounds: function(rowIndex, colIndex) {
       return (
         0 <= rowIndex && rowIndex < this.get('n') &&
@@ -126,7 +141,28 @@
       return false;
     },
 
-
+    //Only checks for diagonal conflict above
+    hasUpperDiagonalConflictAt: function(row, col) {
+      var arr = this.rows();
+      var leftCol = col - 1;
+      var rightCol = col + 1;
+      for (var r = row - 1; r >= 0; r--) {
+        if (leftCol > -1) {
+          if(arr[r][leftCol--] > 0) return true;
+        }
+        if (rightCol < arr.length) {
+          if(arr[r][leftCol++] > 0) return true;
+        }
+      }
+      return false;
+    },
+    hasUpperColumnConflictAt: function(row, col) {
+      var arr = this.rows();
+      for (var r = row - 1; r >= 0; r--) {
+        if (arr[r][col] > 0) return true;
+      }
+      return false;
+    },
 
     // Major Diagonals - go from top-left to bottom-right
     // --------------------------------------------------------------
@@ -163,7 +199,7 @@
     hasMinorDiagonalConflictAt: function(minorDiagonalColumnIndexAtFirstRow) {
       var diagIndex = minorDiagonalColumnIndexAtFirstRow;
       var arr = this.rows();
-      var length = Math.abs(diagIndex);
+      var length = diagIndex + 1;
       var first = false;
       for (var i = 0; i <= length; i++) {
         if (arr[i][length - i] === 1) {
